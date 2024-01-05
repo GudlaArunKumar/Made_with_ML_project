@@ -35,6 +35,8 @@ MANIFEST
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+logs/
+logs
 
 # Unit test / coverage reports
 htmlcov/
@@ -64,6 +66,10 @@ db.sqlite3-journal
 # Flask stuff:
 instance/
 .webassets-cache
+
+# mlflow
+mlruns/
+mlruns
 
 # Scrapy stuff:
 .scrapy
