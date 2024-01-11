@@ -11,19 +11,23 @@ ROOT_DIR = Path(__file__).parent.parent.absolute()
 LOGS_DIR = Path(ROOT_DIR, "logs")
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 EFS_DIR = Path(f"/efs/shared_storage/madewithml/{os.environ.get('GITHUB_USERNAME', '')}")
+
+# trying to create a new EFS directory for storing intermediate model training results
 try:
     Path(EFS_DIR).mkdir(parents=True, exist_ok=True)
 except OSError:
     EFS_DIR = Path(ROOT_DIR, "efs")
     Path(EFS_DIR).mkdir(parents=True, exist_ok=True)
 
-# Config MLflow
+
+# Configuring MLflow
 MODEL_REGISTRY = Path(f"{EFS_DIR}/mlflow")
 Path(MODEL_REGISTRY).mkdir(parents=True, exist_ok=True)
-MLFLOW_TRACKING_URI = "file://" + str(MODEL_REGISTRY.absolute())
+MLFLOW_TRACKING_URI = "file:///" + str(MODEL_REGISTRY.absolute())
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
-# Logger
+
+# Logger configuration
 logging_config = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -66,7 +70,8 @@ logging_config = {
 logging.config.dictConfig(logging_config)
 logger = logging.getLogger()
 
-# Constraints
+
+# Constraints - To load stopwords in preprocessing step
 STOPWORDS = [
     "i",
     "me",
