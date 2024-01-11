@@ -63,6 +63,7 @@ def get_per_class_metrics(y_true: np.ndarray, y_pred: np.ndarray, class_to_index
     sorted_per_class_metrics = OrderedDict(sorted(per_class_metrics.items(), key=lambda tag: tag[1]["f1"], reverse=True))
     return sorted_per_class_metrics
 
+
 # functions to calculate behavorial performance metrics
 @slicing_function()
 def nlp_llm(x):  # pragma: no cover, eval workload
@@ -108,10 +109,10 @@ def get_slice_metrics(y_true: np.ndarray, y_pred: np.ndarray, ds: Dataset) -> Di
 @app.command()
 def evaluate(
     run_id: Annotated[str, typer.Option(help="id of specific run to load model from")] = None,
-    #experiment_name: Annotated[str, typer.Option(help="name of the specific experiment where run id is taken")] = None,
+    # experiment_name: Annotated[str, typer.Option(help="name of the specific experiment where run id is taken")] = None,
     dataset_loc: Annotated[str, typer.Option(help="dataset (with labels) to evaluate")] = None,
-    results_fp: Annotated[str, typer.Option(help="location to save evaluation results")] = None
-) -> Dict:  #pragma: no cover, eval workload
+    results_fp: Annotated[str, typer.Option(help="location to save evaluation results")] = None,
+) -> Dict:  # pragma: no cover, eval workload
     """Function to evaluate on the holdout dataset.
 
     Args:
@@ -127,14 +128,14 @@ def evaluate(
     ds = ray.data.read_csv(dataset_loc)
     best_checkpoint = predict.get_best_checkpoint(run_id=run_id)
     predictor = TorchPredictor.from_checkpoint(best_checkpoint)
-    
+
     # preprocessing the dataset and extracting true labels
     preprocessor = predictor.get_preprocessor()
     preprocessed_ds = preprocessor.transform(ds)
     values = preprocessed_ds.select_columns(cols=["targets"]).take_all()
     y_true = np.stack([item["targets"] for item in values])
 
-    # predicting on dataset 
+    # predicting on dataset
     predictions = preprocessed_ds.map_batches(predictor).take_all()
     y_pred = np.array([d["outputs"] for d in predictions])
 
@@ -148,15 +149,11 @@ def evaluate(
     }
 
     logger.info(json.dumps(metrics, indent=2))
-    if results_fp: # pragma: no cover, saving results
-        utils.save_dict(d=metrics,path=results_fp)
-    
+    if results_fp:  # pragma: no cover, saving results
+        utils.save_dict(d=metrics, path=results_fp)
+
     return metrics
 
 
-
-if __name__ == "__main__": # pragma: no cover, checked during evaluation workload
+if __name__ == "__main__":  # pragma: no cover, checked during evaluation workload
     app()
-
-
-

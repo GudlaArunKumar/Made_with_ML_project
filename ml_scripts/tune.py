@@ -5,10 +5,14 @@ import os
 import ray
 import typer
 from ray import tune
-from ray.air.config import (CheckpointConfig, DatasetConfig, RunConfig, 
-                            ScalingConfig)
+from ray.air.config import (
+    CheckpointConfig,
+    DatasetConfig,
+    RunConfig,
+    ScalingConfig,
+)
 from ray.air.integrations.mlflow import MLflowLoggerCallback
-from ray.train.torch import TorchTrainer, TorchConfig
+from ray.train.torch import TorchConfig, TorchTrainer
 from ray.tune import Tuner
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.search import ConcurrencyLimiter
@@ -83,7 +87,7 @@ def tune_models(
         "val": DatasetConfig(fit=False, transform=False, randomize_block_order=False),
     }
 
-     # torch config to run on windows backend
+    # torch config to run on windows backend
     torch_config = TorchConfig(backend="gloo")
 
     # Preprocess

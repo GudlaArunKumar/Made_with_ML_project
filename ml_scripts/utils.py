@@ -1,17 +1,18 @@
-import json 
-import os 
-import random 
-from typing import Any, Dict, List 
+import json
+import os
+import random
+from typing import Any, Dict, List
 
-import numpy as np 
-import torch 
-from ray.data import DatasetContext 
-from ray.train.torch import get_device 
+import numpy as np
+import torch
+from ray.data import DatasetContext
+from ray.train.torch import get_device
 
-from ml_scripts.config import mlflow 
+from ml_scripts.config import mlflow
 
 # deterministic data distribution in Ray
-DatasetContext.get_current().execution_options.preserve_order = True 
+DatasetContext.get_current().execution_options.preserve_order = True
+
 
 def set_seeds(seed: int = 42):
     """Set seeds for reproducibility."""
@@ -21,7 +22,7 @@ def set_seeds(seed: int = 42):
     torch.cuda.manual_seed(seed)
     eval("setattr(torch.backends.cudnn, 'deterministic', True)")
     eval("setattr(torch.backends.cudnn, 'benchmark', False)")
-    os.environ["PYTHONHASHSEED"] = str(seed) 
+    os.environ["PYTHONHASHSEED"] = str(seed)
 
 
 def load_dict(path: str) -> Dict:
@@ -67,12 +68,12 @@ def pad_array(arr: np.ndarray, dtype=np.int32) -> np.ndarray:
     Returns:
         np.array: zero padded array
     """
-    
+
     max_len = max(len(row) for row in arr)
     padded_arr = np.zeros((arr.shape[0], max_len), dtype=dtype)
     for i, row in enumerate(arr):
-        padded_arr[i][:len(row)] = row
-    return padded_arr 
+        padded_arr[i][: len(row)] = row
+    return padded_arr
 
 
 def collate_fn(batch: Dict[str, np.ndarray]) -> Dict[str, torch.Tensor]:  # pragma: no cover, air internal
@@ -93,7 +94,8 @@ def collate_fn(batch: Dict[str, np.ndarray]) -> Dict[str, torch.Tensor]:  # prag
         tensor_batch[key] = torch.as_tensor(array, dtype=dtypes[key], device=get_device())
     return tensor_batch
 
-def get_run_id(experiment_name: str, trial_id: str) -> str: # pragma: no cover, mlflow functionality
+
+def get_run_id(experiment_name: str, trial_id: str) -> str:  # pragma: no cover, mlflow functionality
     """Get the Mlflow's run id for a specific Ray Trial ID
 
     Args:
@@ -107,6 +109,7 @@ def get_run_id(experiment_name: str, trial_id: str) -> str: # pragma: no cover, 
     trial_name = f"TorchTrainer_{trial_id}"
     run = mlflow.search_runs(experiment_names=[experiment_name], filter_string=f"tags.trial_name = '{trial_name}'").iloc[0]
     return run.run_id
+
 
 def dict_to_list(data: Dict, keys: List[str]) -> List[Dict[str, Any]]:
     """Convert a dictionary to a list of dictionaries.
@@ -123,4 +126,3 @@ def dict_to_list(data: Dict, keys: List[str]) -> List[Dict[str, Any]]:
         new_dict = {key: data[key][i] for key in keys}
         list_of_dicts.append(new_dict)
     return list_of_dicts
-

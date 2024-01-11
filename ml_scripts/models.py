@@ -1,24 +1,25 @@
-import json 
-import os 
-from pathlib import Path 
+import json
+import os
+from pathlib import Path
 
 import torch
-import torch.nn as nn 
-import torch.nn.functional as F 
-from transformers import BertModel 
+import torch.nn as nn
+import torch.nn.functional as F
+from transformers import BertModel
+
 
 class FineTunedLLM(nn.Module):
     """
-    Class for fine tuning the scibert LLM model using appropiate training parameters and 
+    Class for fine tuning the scibert LLM model using appropiate training parameters and
     functions to perform training
     """
 
     def __init__(self, llm, dropout_p, embedding_dim, num_classes):
         super(FineTunedLLM, self).__init__()
         self.llm = llm
-        self.dropout_p = dropout_p 
-        self.embedding_dim = embedding_dim 
-        self.num_classes = num_classes 
+        self.dropout_p = dropout_p
+        self.embedding_dim = embedding_dim
+        self.num_classes = num_classes
         self.dropout = torch.nn.Dropout(dropout_p)
         self.fc1 = torch.nn.Linear(embedding_dim, num_classes)
 
@@ -27,22 +28,22 @@ class FineTunedLLM(nn.Module):
         seq, pool = self.llm(input_ids=ids, attention_mask=masks)
         z = self.dropout(pool)
         z = self.fc1(z)
-        return z 
-    
+        return z
+
     @torch.inference_mode()
     def predict(self, batch):
         self.eval()
         z = self(batch)
         y_pred = torch.argmax(z, dim=1).cpu().numpy()
-        return y_pred 
-    
+        return y_pred
+
     @torch.inference_mode()
     def predict_proba(self, batch):
         self.eval()
         z = self(batch)
         y_probs = F.softmax(z, dim=1).cpu().numpy()
         return y_probs
-    
+
     def save(self, dp):
         with open(Path(dp, "args.json"), "w") as file_path:
             contents = {

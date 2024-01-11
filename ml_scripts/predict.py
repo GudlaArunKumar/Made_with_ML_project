@@ -1,9 +1,10 @@
 import json
+import urllib
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 from urllib.parse import urlparse
-import urllib
 
+import mlflow
 import numpy as np
 import ray
 import typer
@@ -11,17 +12,17 @@ from numpyencoder import NumpyEncoder
 from ray.air import Result
 from ray.train.torch.torch_checkpoint import TorchCheckpoint
 from typing_extensions import Annotated
-import mlflow
 
-from ml_scripts.config import logger, MLFLOW_TRACKING_URI
+from ml_scripts.config import MLFLOW_TRACKING_URI, logger
 from ml_scripts.data import CustomPreprocessor
 from ml_scripts.models import FineTunedLLM
 from ml_scripts.utils import collate_fn
 
-# Initialize Type CLI app 
+# Initialize Type CLI app
 app = typer.Typer()
 
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+
 
 def decode(indices: Iterable[Any], index_to_class: Dict) -> List:
     """Decode indices to labels.
@@ -55,9 +56,10 @@ def format_prob(prob: Iterable[Any], index_to_class: Dict) -> Dict:
 
 class TorchPredictor:
     """
-    predictor class to predict on new data and returns predictions as class labels 
+    predictor class to predict on new data and returns predictions as class labels
     or probabilities.
     """
+
     def __init__(self, preprocessor, model):
         self.preprocessor = preprocessor
         self.model = model
@@ -66,14 +68,14 @@ class TorchPredictor:
     def __call__(self, batch):
         results = self.model.predict(collate_fn(batch))
         return {"outputs": results}
-    
+
     def predict_proba(self, batch):
         results = self.model.predict_proba(collate_fn(batch))
-        return {"outputs": results} 
-    
+        return {"outputs": results}
+
     def get_preprocessor(self):
         return self.preprocessor
-    
+
     @classmethod
     def from_checkpoint(cls, checkpoint):
         metadata = checkpoint.get_metadata()
@@ -82,8 +84,7 @@ class TorchPredictor:
         return cls(preprocessor=preprocessor, model=model)
 
 
-def predict_proba(df: ray.data.Dataset,
-                  predictor: TorchPredictor) -> List:
+def predict_proba(df: ray.data.Dataset, predictor: TorchPredictor) -> List:
     """Predict probability function which formats the probabilites given by TorchPredictor class
 
     Args:
@@ -93,7 +94,7 @@ def predict_proba(df: ray.data.Dataset,
     Returns:
         List: List of Prediction probabilties for the inputs
     """
-    
+
     preprocessor = predictor.get_preprocessor()
     preprocessed_df = preprocessor.transform(df)
     outputs = preprocessed_df.map_batches(predictor.predict_proba)
@@ -126,9 +127,11 @@ def get_best_run_id(experiment_name: str = "", metric: str = "", level: str = ""
     print(run_id)
     return run_id
 
-def get_best_checkpoint(run_id: str,
-                             ) -> TorchCheckpoint:  # pragma: no cover, mlflow logic
-    """Get the best checkpoint from a specific run 
+
+def get_best_checkpoint(
+    run_id: str,
+) -> TorchCheckpoint:  # pragma: no cover, mlflow logic
+    """Get the best checkpoint from a specific run
     if multiple checkpoints are saved during training.
 
     Args:
@@ -137,12 +140,13 @@ def get_best_checkpoint(run_id: str,
     Returns:
         TorchCheckpoint: Best checkpoint from the run.
     """
-   
+
     artifact_dir = urlparse(mlflow.get_run(run_id).info.artifact_uri).path  # get path from mlflow
-    artifact_dir = urllib.request.url2pathname(artifact_dir) # workaround to turn filepath to windows filepath
-    #print(artifact_dir)
+    artifact_dir = urllib.request.url2pathname(artifact_dir)  # workaround to turn filepath to windows filepath
+    # print(artifact_dir)
     results = Result.from_path(artifact_dir)
     return results.best_checkpoints[0][0]
+
 
 @app.command()
 def predict_single(
@@ -150,7 +154,6 @@ def predict_single(
     title: Annotated[str, typer.Option(help="Input title for the datapoint")] = None,
     description: Annotated[str, typer.Option(help="Input description for the datapoint")] = None,
 ) -> Dict:  # pragma: no cover, tested with inference workload
-    
     """Predict the tag for a individual project/datapoint given it's title and description.
 
     Args:
@@ -175,4 +178,3 @@ def predict_single(
 
 if __name__ == "__main__":
     app()
-
