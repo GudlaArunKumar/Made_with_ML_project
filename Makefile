@@ -1,5 +1,5 @@
 # Makefile
-SHELL = /bin/bash
+SHELL = /usr/bin/bash
 
 # Styling
 .PHONY: style
