@@ -54,7 +54,7 @@ def format_prob(prob: Iterable[Any], index_to_class: Dict) -> Dict:
     return d
 
 
-class TorchPredictor:
+class TorchPredictor:  # pragma: no cover, loading model required
     """
     predictor class to predict on new data and returns predictions as class labels
     or probabilities.
@@ -84,7 +84,7 @@ class TorchPredictor:
         return cls(preprocessor=preprocessor, model=model)
 
 
-def predict_proba(df: ray.data.Dataset, predictor: TorchPredictor) -> List:
+def predict_proba(df: ray.data.Dataset, predictor: TorchPredictor) -> List:  # pragma: no cover
     """Predict probability function which formats the probabilites given by TorchPredictor class
 
     Args:
@@ -142,7 +142,7 @@ def get_best_checkpoint(
     """
 
     artifact_dir = urlparse(mlflow.get_run(run_id).info.artifact_uri).path  # get path from mlflow
-    artifact_dir = urllib.request.url2pathname(artifact_dir)  # workaround to turn filepath to windows filepath
+    artifact_dir = urllib.request.url2pathname(artifact_dir)  # workaround to turn mlflow filepath to windows filepath
     # print(artifact_dir)
     results = Result.from_path(artifact_dir)
     return results.best_checkpoints[0][0]

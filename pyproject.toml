@@ -31,3 +31,19 @@ ignore = ["E501", "W503", "E226"]
 # E501: Line too long
 # W503: Line break occurred before binary operator
 # E226: Missing white space around arithmetic operator
+
+# Pytest - checks for test scripts under tests folder with name starting as test_
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+filterwarnings = [
+    # "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+    # note the use of single quote below to denote "raw" strings in TOML
+    'ignore:function ham\(\) is deprecated:DeprecationWarning',
+]
+
+# Pytest cov
+[tool.coverage.run]
+omit=["ml_scripts/evaluate.py", "ml_scripts/serve.py"]
